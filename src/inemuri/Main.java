@@ -55,16 +55,16 @@ class GameMain {
 		public void run() {
 			Graphics2D graphic = (Graphics2D) buffer.getDrawGraphics();
 			/////////////
-			input.update(window);
 			gm.firstUpdate();
+			input.update(window);
 			gm.mainUpdate();
-			gm.lateUpdate();
 			/////////////
 			if (buffer.contentsLost() == false) {
 				graphic.translate(insets.left, insets.top);
 				graphic.clearRect(0, 0, 900, 600);
 				//////////////////////////
 				drawMain(graphic, window);
+				gm.lateUpdate();
 				//////////////////////////
 				buffer.show();
 				graphic.dispose();
