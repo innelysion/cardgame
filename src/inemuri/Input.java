@@ -157,6 +157,12 @@ public class Input implements MouseListener, MouseMotionListener, MouseWheelList
 		case KeyEvent.VK_C:
 			keyPr.C = true;
 			break;
+		case KeyEvent.VK_ENTER:
+			keyPr.ENTER = true;
+			break;
+		case KeyEvent.VK_SPACE:
+			keyPr.SPACE = true;
+			break;
 		}
 
 		dirCheck();
@@ -219,6 +225,14 @@ public class Input implements MouseListener, MouseMotionListener, MouseWheelList
 			keyRe.C = true;
 			keyPr.C = false;
 			break;
+		case KeyEvent.VK_ENTER:
+			keyRe.ENTER = true;
+			keyPr.ENTER = false;
+			break;
+		case KeyEvent.VK_SPACE:
+			keyRe.SPACE = true;
+			keyPr.SPACE = false;
+			break;
 		default:
 //			keyRe.SHIFT = false;
 ////			keyRe.ESC = false;
@@ -229,6 +243,7 @@ public class Input implements MouseListener, MouseMotionListener, MouseWheelList
 			keyRe.Z = false;
 			keyRe.X = false;
 			keyRe.C = false;
+			keyRe.ENTER = false;
 		}
 
 		dirCheck();
@@ -313,17 +328,17 @@ public class Input implements MouseListener, MouseMotionListener, MouseWheelList
 }
 
 class GameKeyPressed {
-	boolean SHIFT, ESC, Z, X, C, LEFT, UP, RIGHT, DOWN;
+	boolean SPACE, ENTER, SHIFT, ESC, Z, X, C, LEFT, UP, RIGHT, DOWN;
 }
 
 class GamekeyReleased {
-	boolean SHIFT, ESC, Z, X, C;// , LEFT, UP, RIGHT, DOWN;
-	private boolean rSHIFT, rESC, rZ, rX, rC;// , rLEFT, rUP, rRIGHT, rDOWN;
+	boolean SPACE, ENTER, SHIFT, ESC, Z, X, C;// , LEFT, UP, RIGHT, DOWN;
+	private boolean rSPACE, rENTER, rSHIFT, rESC, rZ, rX, rC;// , rLEFT, rUP, rRIGHT, rDOWN;
 
 	void reset() {
 		// Maybe Add more
-		boolean[] key = { SHIFT, ESC, Z, X, C };// LEFT, UP, RIGHT, DOWN };
-		boolean[] keyr = { rSHIFT, rESC, rZ, rX, rC };// , rLEFT, rUP, rRIGHT,
+		boolean[] key = { SPACE, ENTER, SHIFT, ESC, Z, X, C };// LEFT, UP, RIGHT, DOWN };
+		boolean[] keyr = { rSPACE, rENTER, rSHIFT, rESC, rZ, rX, rC };// , rLEFT, rUP, rRIGHT,
 														// rDOWN };
 		for (int i = 0; i < key.length; i++) {
 			if (key[i] && keyr[i]) {
@@ -334,21 +349,25 @@ class GamekeyReleased {
 			}
 		}
 		// Maybe Add more
-		SHIFT = key[0];
-		ESC = key[1];
-		Z = key[2];
-		X = key[3];
-		C = key[4];
+		SPACE = key[0];
+		ENTER = key[1];
+		SHIFT = key[2];
+		ESC = key[3];
+		Z = key[4];
+		X = key[5];
+		C = key[6];
 //		LEFT = key[5];
 //		RIGHT = key[6];
 //		UP = key[7];
 //		DOWN = key[8];
 		// Maybe Add more
-		rSHIFT = keyr[0];
-		rESC = keyr[1];
-		rZ = keyr[2];
-		rX = keyr[3];
-		rC = keyr[4];
+		rSPACE = keyr[0];
+		rENTER = keyr[1];
+		rSHIFT = keyr[2];
+		rESC = keyr[3];
+		rZ = keyr[4];
+		rX = keyr[5];
+		rC = keyr[6];
 //		rLEFT = keyr[5];
 //		rRIGHT = keyr[6];
 //		rUP = keyr[7];

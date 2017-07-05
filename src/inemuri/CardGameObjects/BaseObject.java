@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import inemuri.CardGameObjects.Enum.*;
+
+import inemuri.CardGameObjects.Enum.Party;
 
 public abstract class BaseObject {
 	// 固有信息
@@ -33,6 +34,7 @@ public abstract class BaseObject {
 		party = Party.NEUTRAL;
 		disabled = false;
 		buffs = new ArrayList<Buff>();
+		elements = new ArrayList<Element>();
 		priority = 0;
 		cardSelector = c -> false;
 		cardModifier = c -> {

@@ -1,25 +1,20 @@
 package inemuri;
 
-import java.util.ArrayList;
+import java.util.function.Predicate;
+
+import inemuri.CardGameObjects.Card;
+import inemuri.CardGameObjects.Enum.Type;
+import inemuri.CardGameObjects.Enum.Zone;
 
 // 全局变量
 public class GameSetting {
+	static Predicate<Card> legalCheck = c -> //
+	(c.isIn(Zone.PLAYSTACK) && (c.isType(Type.ATTACK) || c.isType(Type.DEFENCE) || c.isType(Type.FOCUS))) || //
+			(c.isIn(Zone.LIBRARY) && c.isType(Type.SEAL)) || //
+			(c.isIn(Zone.GRAVEYARD) && c.isType(Type.MAGIC)) || //
+			(c.isIn(Zone.HAND) && c.isType(Type.EQUIPMENT));//
 
-
+	static String[] ATKElements = { "灵", "魔", "妖", "神", "幻", "源", "心", "无" };
 }
 
-// 类型
-enum Types {
-	// 默认
-	DEFAULT,
-	// 使用属性表的基础行动(攻击, 防御, 集中)
-	ACTION,
-	// (效果)装备, 结界, 法术
-	EQUIPMENT, SEAL, MAGIC,
-	// (事件)事件
-	EVENT,
-	// (非玩家可用)触发器
-	TRIGGER,
-	// (其他)
-	OTHER,
-}
+

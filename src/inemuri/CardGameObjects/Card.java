@@ -1,6 +1,10 @@
 package inemuri.CardGameObjects;
 
-import inemuri.CardGameObjects.Enum.*;
+import java.util.ArrayList;
+
+import inemuri.CardGameObjects.Enum.Party;
+import inemuri.CardGameObjects.Enum.Type;
+import inemuri.CardGameObjects.Enum.Zone;
 
 public class Card extends BaseObject {
 	// 战斗用
@@ -14,6 +18,7 @@ public class Card extends BaseObject {
 		description = CardsPool.description[i];
 		type = CardsPool.type[i];
 		zone = Zone.DEFAULT;
+		CardsPool.addElements(elements, i);
 	}
 
 	// Gets
@@ -30,7 +35,7 @@ public class Card extends BaseObject {
 	public void putInto(Zone z) {
 		zone = z;
 	}
-	
+
 	// 以上Sets
 }
 
@@ -49,5 +54,32 @@ class CardsPool {
 	static Type[] type = { Type.DEFAULT, Type.ATTACK, Type.ATTACK, Type.ATTACK, Type.ATTACK, Type.ATTACK, Type.ATTACK,
 			Type.ATTACK, Type.ATTACK, Type.DEFENCE, Type.FOCUS, Type.SEAL, Type.EQUIPMENT, Type.EVENT, Type.EQUIPMENT,
 			Type.MAGIC, Type.MAGIC, Type.EQUIPMENT };
+
+	static void addElements(ArrayList<Element> list, int i) {
+		String[] basic = { "DEFAULT", "灵", "魔", "妖", "神", "幻", "源", "心", "无", "盾", "集" };
+		if (i >= 1 && i <= 10) {
+			list.add(new Element(basic[i], 1));
+		} else {
+			switch (i) {
+			case 11:// 二重结界[
+				list.add(new Element("盾", 0, 1, 1));
+				break;
+			case 12:// 御币
+				list.add(new Element("灵", 1));
+				list.add(new Element("盾", 1));
+				break;
+			case 14:// 迷你八卦炉
+				list.add(new Element("魔", 2));
+				break;
+			case 15:// 光尘[
+				list.add(new Element("魔", 0, 1, 1));
+				break;
+			case 17:// 蛇蛙发饰
+				list.add(new Element("盾", 1));
+				list.add(new Element("集", 1));
+				break;
+			}
+		}
+	}
 
 }

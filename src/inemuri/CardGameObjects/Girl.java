@@ -1,7 +1,8 @@
 package inemuri.CardGameObjects;
 
 import java.util.ArrayList;
-import inemuri.CardGameObjects.Enum.*;
+
+import inemuri.CardGameObjects.Enum.Party;
 
 public class Girl extends BaseObject {
 	// 战斗用
@@ -23,7 +24,9 @@ public class Girl extends BaseObject {
 		ATK = GirlsPool.atk[i];
 		DEF = GirlsPool.def[i];
 		position = -1;
-		mainDeck = GirlsPool.deck(i);
+		mainDeck = new ArrayList<Card>();
+		GirlsPool.addDeck(mainDeck, i);
+		GirlsPool.addElements(elements, i);
 	}
 
 	// Gets
@@ -59,7 +62,8 @@ public class Girl extends BaseObject {
 	// 以上Gets
 	// Sets
 	public void hpDamage(int i) {
-		HP += i;
+		System.out.println(name + "HP" + (i < 0 ? "+" : "-") + i + "★");
+		HP -= i;
 	}
 
 	public void shieldDamage(int i) {
@@ -75,12 +79,11 @@ public class Girl extends BaseObject {
 
 class GirlsPool {
 	static String[] name = { "DEFAULT_NAME", "博丽灵梦", "雾雨魔理沙", "东风谷早苗", "琪露诺", "莉格露", "露米娅" };
-	static int[] maxhp = { 1, 100, 100, 100, 70, 70, 100 };
+	static int[] maxhp = { 1, 600, 600, 600, 450, 550, 700 };
 	static int[] atk = { 1, 6, 7, 5, 4, 5, 4 };
 	static int[] def = { 1, 6, 5, 7, 3, 2, 4 };
 
-	static ArrayList<Card> deck(int i) {
-		ArrayList<Card> deck = new ArrayList<Card>();
+	static void addDeck(ArrayList<Card> deck, int i) {
 		int[] c = null;
 		switch (i) {
 		case 1: // 城管
@@ -105,6 +108,30 @@ class GirlsPool {
 		for (int id : c) {
 			deck.add(new Card(id, Party.DEFAULT));
 		}
-		return deck;
+	}
+
+	static void addElements(ArrayList<Element> list, int i) {
+		switch (i) {
+		case 1:// 城管
+			list.add(new Element("灵", 0));
+			list.add(new Element("无", 0));
+			break;
+		case 2:// 黑白
+			list.add(new Element("魔", 0));
+			break;
+		case 3: // 糟苗
+			list.add(new Element("灵", 0));
+			list.add(new Element("神", 0));
+			break;
+		case 4:// 9
+			list.add(new Element("源", 0));
+			break;
+		case 5:// 虫
+			list.add(new Element("源", 0));
+			break;
+		case 6:// 7
+			list.add(new Element("妖", 0));
+			break;
+		}
 	}
 }
