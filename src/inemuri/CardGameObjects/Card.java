@@ -24,6 +24,9 @@ public class Card extends GameBaseObject {
 		if (i == 13) {
 			buffs.add(new Buff(1));
 		}
+		if (i == 16) {
+			buffs.add(new Buff(2));
+		}
 	}
 
 	// Gets

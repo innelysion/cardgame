@@ -47,7 +47,7 @@ public class Buff {
 	// 主处理
 	public void run() {
 		switch (id) {
-		case 1: // B塞钱征收（"如成功对敌方队伍造成HP伤害,下回合抽牌阶段额外抽三张卡"）
+		case 1: // B塞钱征收("如成功对敌方队伍造成HP伤害,下回合抽牌阶段额外抽三张卡")
 			// 如果附有此buff的卡在堆叠中
 			if (playerDeck.stream().filter(c -> c.getBuffs().contains(this)).anyMatch(c -> c.isIn(Zone.PLAYSTACK))) {
 				// 本回合伤害大于(敌方堆叠产生的护盾值+敌方行动角色已有护盾)的和
@@ -58,7 +58,14 @@ public class Buff {
 				}
 			}
 			break;
-		case 2: // B魔力吸收
+		case 2: // B魔力吸收("敌方取得先手且敌方本回合使用过【魔】的话,【魔】增强3")
+			if (playerDeck.stream().filter(c -> c.getBuffs().contains(this)).anyMatch(c -> c.isIn(Zone.GRAVEYARD))) {
+				if (enemyDeck.stream().filter(c -> c.isIn(Zone.PLAYSTACK))
+						.anyMatch(c -> c.getElements().stream().anyMatch(e -> e.getName() == "魔"))) {
+					attackP += 100;
+					System.out.println("★★魔力吸收生效★★");
+				}
+			}
 			break;
 		case 3: // B蛇蛙发饰
 			break;
