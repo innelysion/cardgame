@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
+import inemuri.CardGameObjects.Buff;
 import inemuri.CardGameObjects.Card;
 import inemuri.CardGameObjects.Element;
 import inemuri.CardGameObjects.Girl;
@@ -26,6 +27,7 @@ public class GameBattle {
 	private int playerHandSize, enemyHandSize; // 手牌上限
 	private int playerExtraDraws, enemyExtraDraws; // 额外抽卡次数
 	private int playerDeckResetTimes, enemyDeckResetTimes; // 牌库抓空后重置次数
+	private int attackP, shieldP, focusP, attackE, shieldE, focusE; // 回合内伤害值,护盾加值,集中值,P=Player,E=Enemy
 	private HashMap<String, Integer> gameData; // 以上各项int数据的容器，传给卡牌和角色使用
 
 	GameBattle() {
@@ -41,12 +43,15 @@ public class GameBattle {
 		playerHandSize = enemyHandSize = 10;
 		playerExtraDraws = enemyExtraDraws = 0;
 		playerDeckResetTimes = enemyDeckResetTimes = 0;
+		attackP = shieldP = focusP = attackE = shieldE = focusE = 0;
 		gameData = new HashMap<String, Integer>();
-		updategameData();
+
+		getNowGameData();
 	}
 
+	// 对局主循环
 	public void update() {
-		// 步进操作
+		// 步进操作，偶数阶段为等待输入下一步
 		if ((Input.keyRe.ENTER || Input.keyRe.SPACE) && phase < 100) {
 			phase++;
 		}
@@ -105,15 +110,19 @@ public class GameBattle {
 		}
 	}
 
+	/////////////////////////////////////////////////////////////////////////////////
+	// 以下为各阶段主处理
+
+	// 阶段1: 回合开始环节
 	private void runPrepareProcess() {
 		if (checkGameOver()) {
 			return;
 		}
 		playerNextGirl();
 		enemyNextGirl();
-		checkEffects();
 	}
 
+	// 阶段3: 双方抽卡环节
 	private void runDrawProcess() {
 		int playerHand = (int) playerDeck.stream().filter(c -> c.isIn(Zone.HAND)).count();
 		int enemyHand = (int) enemyDeck.stream().filter(c -> c.isIn(Zone.HAND)).count();
@@ -129,6 +138,7 @@ public class GameBattle {
 
 	}
 
+	// 阶段5: 我方出牌环节
 	private void runPlayerActionProcess() {
 		playerDeck.stream().filter(c -> c.isIn(Zone.HAND) && !c.isType(Type.EQUIPMENT)).forEach(c -> {
 			c.putInto(Zone.PLAYSTACK);
@@ -136,6 +146,7 @@ public class GameBattle {
 		});
 	}
 
+	// 阶段7: 敌方出牌环节
 	private void runEnemyActionProcess() {
 		enemyDeck.stream().filter(c -> c.isIn(Zone.HAND) && !c.isType(Type.EQUIPMENT)).forEach(c -> {
 			c.putInto(Zone.PLAYSTACK);
@@ -143,16 +154,19 @@ public class GameBattle {
 		});
 	}
 
+	// 阶段8: 战斗及结算环节
 	private void runBattleProcess() {
-		checkEffects();
 		playStackResolve();
-		checkEffects();
 	}
 
+	// 阶段11: 回合结束环节
 	private void runTurnEndProcess() {
+		// 清空回合内伤害值,护盾加值,集中值
+		attackP = shieldP = focusP = attackE = shieldE = focusE = 0;
 		turns++;
 	}
 
+	// 阶段-1：对局初始化环节（只会在对决开始运行一次）
 	private void runGameStartProcess() {
 		// 添加角色，设置位置
 		playerTeam.add(new Girl(1, Party.ALLY));
@@ -206,26 +220,26 @@ public class GameBattle {
 		turns++;
 	}
 
-	// 进行全部角色与卡片的特效处理
-	private void checkEffects() {
-		// 更新对局数据
-		updategameData();
-		// 处理角色特效
-		// allGirls.forEach(g -> {
-		// g.setgameData(gameData);
-		// allGirls.stream().filter(g.getGirlsSelector()).forEach(g.getGirlsModifier());
-		// allCards.stream().filter(g.getCardSelector()).forEach(g.getCardModifier());
-		// gameData = g.getgameData();
-		// });
-		// // 处理卡牌特效
-		// allCards.forEach(c -> {
-		// c.setgameData(gameData);
-		// allGirls.stream().filter(c.getGirlsSelector()).forEach(c.getGirlsModifier());
-		// allCards.stream().filter(c.getCardSelector()).forEach(c.getCardModifier());
-		// gameData = c.getgameData();
-		// });
-		// 胜负判定
-		checkParty();
+	// 以上为各阶段主处理
+	/////////////////////////////////////////////////////////////////////////////////
+
+	// buff效果判定
+	private void checkBuffs() {
+		// 获取所有角色和卡牌中激活的buff
+		ArrayList<Buff> activeBuffs = new ArrayList<Buff>();
+		allCards.stream().map(c -> c.getBuffs()).forEach(
+				list -> list.stream().filter(buff -> buff.isActive()).forEach(legalbuff -> activeBuffs.add(legalbuff)));
+		allGirls.stream().map(c -> c.getBuffs()).forEach(
+				list -> list.stream().filter(buff -> buff.isActive()).forEach(legalbuff -> activeBuffs.add(legalbuff)));
+		// 按优先度排序(优先度越大越靠后结算)
+		activeBuffs.sort((b1, b2) -> Integer.compare(b1.getPriority(), b2.getPriority()));
+		// 将对决数据传给buff，进行buff主处理，接收返回的对局数据
+		activeBuffs.forEach(b -> {
+			getNowGameData();
+			b.updateGameData(gameData, allGirls, allCards, activeBuffs);
+			b.run();
+			setModifiedGameDataFromBuff(b);
+		});
 	}
 
 	// 检测并处理战斗不能的角色进行胜负判定，以及重整队列和决定当前行动角色
@@ -264,7 +278,7 @@ public class GameBattle {
 		boolean gameover = false;
 		// 抽卡次数
 		for (int i = 0; i < times; i++) {
-			// 如果牌库被抽空，则将墓地（墓地也为空则判负）洗入牌库后，再进行抽卡
+			// 如果牌库被抽空，则将墓地（墓地也为空则判负）洗入牌库
 			if (deck.stream().noneMatch(c -> c.isIn(Zone.LIBRARY))) {
 				if (deck.stream().noneMatch(c -> c.isIn(Zone.GRAVEYARD))) {
 					// 判负
@@ -274,18 +288,15 @@ public class GameBattle {
 				}
 				deck.stream().filter(c -> c.isIn(Zone.GRAVEYARD)).forEach(c -> c.putInto(Zone.LIBRARY));
 				Collections.shuffle(deck);
-				if (isMyTurn) {
-					playerDeckResetTimes++;
-					System.out.println("我方第" + playerDeckResetTimes + "次重洗★");
-				} else {
-					enemyDeckResetTimes++;
-					System.out.println("敌方第" + enemyDeckResetTimes + "次重洗★");
-				}
+				// 重洗次数增加
+				playerDeckResetTimes += isMyTurn ? 1 : 0;
+				enemyDeckResetTimes += isMyTurn ? 0 : 1;
+				System.out.println((isMyTurn ? "我方第" + playerDeckResetTimes : "敌方第" + enemyDeckResetTimes) + "次重洗★");
 			}
 			// 抽卡处理，将一张卡从牌库置入抽卡堆叠
 			deck.stream().filter(c -> c.isIn(Zone.LIBRARY)).findFirst().get().putInto(Zone.DRAWSTACK);
 		}
-		// 无法抽卡则返回
+		// 无法抽卡则设置游戏结束并返回
 		if (gameover) {
 			phase = 999;
 			return;
@@ -313,13 +324,12 @@ public class GameBattle {
 	// 抽卡堆叠结算
 	private void drawStackResolve(boolean isMyTurn) {
 
-		checkEffects();
 		ArrayList<Card> deck = isMyTurn ? playerDeck : enemyDeck;
 		deck.stream().filter(c -> c.isIn(Zone.DRAWSTACK)).forEach(c -> {
-			// 事件卡结算后不经手牌直接进入墓地
+			// 事件卡不经手牌直接进入出牌堆叠
 			if (c.isType(Type.EVENT)) {
-				System.out.println("触发事件★/" + c.getName());
-				c.putInto(Zone.GRAVEYARD);
+				System.out.println("触发事件★" + c.getName() + "★" + c.getDescription());
+				c.putInto(Zone.PLAYSTACK);
 			} else {
 				c.putInto(Zone.HAND);
 			}
@@ -354,48 +364,55 @@ public class GameBattle {
 		}
 	}
 
-	// 出卡堆叠计算
+	// 出卡堆叠计算(P = player, E = Enemy)
 	private void playStackResolve() {
-
+		// 属性容器
 		ArrayList<Element> collectorP = new ArrayList<Element>();
 		ArrayList<Element> collectorE = new ArrayList<Element>();
+		// 当前行动的对象
 		Girl girlP = playerTeam.get(playerActivingGirl);
 		Girl girlE = enemyTeam.get(enemyActivingGirl);
-		int attackP, shieldP, focusP, attackE, shieldE, focusE;
-		//
+		// 收集所有处于合法生效区域卡牌的属性
 		playerDeck.stream().filter(GameSetting.legalCheck)
 				.forEach(c -> c.getElements().forEach(e -> e.addSameTo(collectorP)));
 		enemyDeck.stream().filter(GameSetting.legalCheck)
 				.forEach(c -> c.getElements().forEach(e -> e.addSameTo(collectorE)));
+		// 将收集到的属性加在回合内伤害/护盾/集中值上
 		attackP = collectValue(GameSetting.ATKElements, collectorP, girlP) * girlP.getAtk();
 		attackE = collectValue(GameSetting.ATKElements, collectorE, girlE) * girlE.getAtk();
 		shieldP = collectValue(new String[] { "盾" }, collectorP, girlP) * girlP.getDef();
 		shieldE = collectValue(new String[] { "盾" }, collectorE, girlE) * girlE.getDef();
 		focusP = collectValue(new String[] { "集" }, collectorP, girlP);
 		focusE = collectValue(new String[] { "集" }, collectorE, girlE);
-		//
+		// debug信息
 		System.out.println("我方★DMG:" + attackP + "/SHD:" + shieldP + "/FUS:" + focusP);
 		System.out.println("敌方★DMG:" + attackE + "/SHD:" + shieldE + "/FUS:" + focusE);
-		//
+		// 进行特效处理
+		checkBuffs();
+		// 造成普攻伤害
 		girlP.hpDamage(attackE - shieldP);
 		girlE.hpDamage(attackP - shieldE);
+		checkGameOver();
 		System.out.println("【" + girlP.getName() + "】★HP:" + girlP.getHp() + " SHIELD:" + girlP.getShield());
 		System.out.println("【" + girlE.getName() + "】★HP:" + girlE.getHp() + " SHIELD:" + girlE.getShield());
-
+		// 将堆叠中结算完毕的卡牌丢入弃牌区
 		allCards.stream().filter(c -> c.isIn(Zone.PLAYSTACK)).forEach(c -> {
 			c.putInto(Zone.GRAVEYARD);
 		});
 	}
 
-	//
+	// 属性效果总值，应用属性加减/乘除修正器和主属性修正
 	private int collectValue(String[] name, ArrayList<Element> list, Girl girl) {
 		int result = 0;
+		// 按传入的名称数组寻找同名属性并计算效果合计值，加到结果上
 		for (String n : name) {
 			result += list.stream().filter(e -> e.getName() == n).mapToInt(e -> {
+				// 比较是否和角色主属性匹配，匹配则效果翻倍
 				int mainMod = e.anySameIn(girl.getElements()) ? 2 : 1;
-				if (e.getValueBase() != 0) {
+				if (e.getValueBase() >= 0) {
 					return (e.getValueBase() * mainMod + e.getValueAddMod()) * e.getValueMultiMod();
 				} else {
+					// 如果属性基础值小于0则直接返回0（治疗不在此计算）
 					return 0;
 				}
 			}).sum();
@@ -403,10 +420,32 @@ public class GameBattle {
 		return result;
 	}
 
-	//
-	private void updategameData() {
-		gameData.put("phase", phase);
+	// 将被BUFF修正的数据回传
+	private void setModifiedGameDataFromBuff(Buff b) {
+		gameData = b.returnGameData();
+		turns = gameData.get("turns");
+		phase = gameData.get("phase");
+		playerTeamSize = gameData.get("playerTeamSize");
+		enemyTeamSize = gameData.get("enemyTeamSize");
+		playerActivingGirl = gameData.get("playerActivingGirl");
+		enemyActivingGirl = gameData.get("enemyActivingGirl");
+		playerHandSize = gameData.get("playerHandSize");
+		enemyHandSize = gameData.get("enemyHandSize");
+		playerExtraDraws = gameData.get("playerExtraDraws");
+		enemyExtraDraws = gameData.get("enemyExtraDraws");
+		playerDeckResetTimes = gameData.get("playerDeckResetTimes");
+		enemyDeckResetTimes = gameData.get("enemyDeckResetTimes");
+		attackP = gameData.get("attackP");
+		shieldP = gameData.get("shieldP");
+		focusP = gameData.get("focusP");
+		attackE = gameData.get("attackE");
+		shieldE = gameData.get("shieldE");
+		focusE = gameData.get("focusE");
+	}
+
+	private void getNowGameData() {
 		gameData.put("turns", turns);
+		gameData.put("phase", phase);
 		gameData.put("playerTeamSize", playerTeamSize);
 		gameData.put("enemyTeamSize", enemyTeamSize);
 		gameData.put("playerActivingGirl", playerActivingGirl);
@@ -417,6 +456,11 @@ public class GameBattle {
 		gameData.put("enemyExtraDraws", enemyExtraDraws);
 		gameData.put("playerDeckResetTimes", playerDeckResetTimes);
 		gameData.put("enemyDeckResetTimes", enemyDeckResetTimes);
+		gameData.put("attackP", attackP);
+		gameData.put("shieldP", shieldP);
+		gameData.put("focusP", focusP);
+		gameData.put("attackE", attackE);
+		gameData.put("shieldE", shieldE);
+		gameData.put("focusE", focusE);
 	}
-
 }

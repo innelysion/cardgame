@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 
 import inemuri.CardGameObjects.Enum.Party;
 
-public abstract class BaseObject {
+public abstract class GameBaseObject {
 	// 固有信息
 	protected int id; // 序号
 	protected String name; // 名称
@@ -19,14 +19,8 @@ public abstract class BaseObject {
 	protected ArrayList<Buff> buffs; // 状态
 	protected ArrayList<Element> elements; // 主属性
 	protected HashMap<String, Object> gameData; // 对局数据
-	// 效果较为复杂时使用的过滤器和修正器
-	protected int priority; // 处理优先级
-	protected Predicate<Card> cardSelector;
-	protected Consumer<Card> cardModifier;
-	protected Predicate<Girl> girlSelector;
-	protected Consumer<Girl> girlModifier;
 
-	BaseObject() {
+	GameBaseObject() {
 		id = 0;
 		name = "";
 		nameIcon = "";
@@ -35,13 +29,6 @@ public abstract class BaseObject {
 		disabled = false;
 		buffs = new ArrayList<Buff>();
 		elements = new ArrayList<Element>();
-		priority = 0;
-		cardSelector = c -> false;
-		cardModifier = c -> {
-		};
-		girlSelector = g -> false;
-		girlModifier = g -> {
-		};
 	}
 
 	// Gets

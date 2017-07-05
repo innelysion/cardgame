@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 import inemuri.CardGameObjects.Enum.Party;
 
-public class Girl extends BaseObject {
+public class Girl extends GameBaseObject {
 	// 战斗用
 	private int MAXHP; // 最大耐久
 	private int HP; // 耐久
@@ -16,6 +16,7 @@ public class Girl extends BaseObject {
 
 	public Girl(int i, Party p) {
 		super();
+		id = i;
 		party = p;
 		name = GirlsPool.name[i];
 		MAXHP = GirlsPool.maxhp[i];

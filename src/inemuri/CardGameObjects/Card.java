@@ -6,19 +6,24 @@ import inemuri.CardGameObjects.Enum.Party;
 import inemuri.CardGameObjects.Enum.Type;
 import inemuri.CardGameObjects.Enum.Zone;
 
-public class Card extends BaseObject {
+public class Card extends GameBaseObject {
 	// 战斗用
 	private Type type; // 类型
 	private Zone zone; // 当前位置
 
 	public Card(int i, Party p) {
 		super();
+		id = i;
 		party = p;
 		name = CardsPool.name[i];
 		description = CardsPool.description[i];
 		type = CardsPool.type[i];
 		zone = Zone.DEFAULT;
 		CardsPool.addElements(elements, i);
+
+		if (i == 13) {
+			buffs.add(new Buff(1));
+		}
 	}
 
 	// Gets
@@ -28,6 +33,10 @@ public class Card extends BaseObject {
 
 	public boolean isType(Type t) {
 		return t == type;
+	}
+
+	public String getDescription() {
+		return description;
 	}
 
 	// 以上Gets
