@@ -134,7 +134,7 @@ public class GameManager {
 	}
 
 	private void runBattleProcess() {
-
+		playStackResolve();
 	}
 
 	private void runTurnEndProcess() {
@@ -159,13 +159,13 @@ public class GameManager {
 		System.out.print("我方参战角色★");
 		playerTeam.stream().forEach(g -> {
 			System.out.print("【" + g.getName() + "】");
-			playerDeck.addAll(g.getMainDeck());
+			playerDeck.addAll(g.getMainDeck(Party.ALLY));
 		});
 		System.out.println();
 		System.out.print("敌方参战角色★");
 		enemyTeam.stream().forEach(g -> {
 			System.out.print("【" + g.getName() + "】");
-			enemyDeck.addAll(g.getMainDeck());
+			enemyDeck.addAll(g.getMainDeck(Party.ENEMY));
 		});
 		System.out.println();
 
@@ -198,7 +198,7 @@ public class GameManager {
 			checkEffects(c);
 			// 事件卡结算后不经手牌直接进入墓地
 			if (c.isType(Type.EVENT)) {
-				System.out.println("触发事件★" + c.getName());
+				System.out.println("触发事件★/" + c.getName());
 				c.putInto(Zone.GRAVEYARD);
 			} else {
 				c.putInto(Zone.HAND);
@@ -208,13 +208,19 @@ public class GameManager {
 
 	// 出卡堆叠计算
 	private void playStackResolve() {
-
+		allCards.stream().filter(c -> c.isIn(Zone.PLAYSTACK)).forEach(c -> c.putInto(Zone.GRAVEYARD));
+		System.out.print("我方弃牌堆数量★");
+		System.out.print(playerDeck.stream().filter(c -> c.isIn(Zone.GRAVEYARD)).count() + "     ");
+		System.out.print("敌方弃牌堆数量★");
+		System.out.print(enemyDeck.stream().filter(c -> c.isIn(Zone.GRAVEYARD)).count());
+		System.out.println();
 	}
 
 	// 我方下一个角色行动
 	private void playerNextGirl() {
 		boolean flag = false;
 		while (flag == false) {
+			// 直到行动标识移动到非战斗不能的队员身上才跳出
 			playerActivingGirl += playerActivingGirl < playerTeamSize - 1 ? 1 : -(playerTeamSize - 1);
 			if (playerTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == playerActivingGirl)) {
 				flag = true;
@@ -227,6 +233,7 @@ public class GameManager {
 	private void enemyNextGirl() {
 		boolean flag = false;
 		while (flag == false) {
+			// 直到行动标识移动到非战斗不能的队员身上才跳出
 			enemyActivingGirl += enemyActivingGirl < enemyTeamSize - 1 ? 1 : -(enemyTeamSize - 1);
 			if (enemyTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == enemyActivingGirl)) {
 				flag = true;
@@ -281,11 +288,12 @@ public class GameManager {
 		if (checkGameOver()) {
 			return;
 		}
+		// 检查战斗不能标识，如果当前角色战斗不能则轮换下一名角色行动
 		allGirls.stream().filter(g -> g.getHp() <= 0 && !g.isDead()).forEach(g -> {
 			g.setDeadOrNot(true);
-			if (g.belongs(Party.ALLY)) {
+			if (g.belongs(Party.ALLY) && g.getPosition() == playerActivingGirl) {
 				playerNextGirl();
-			} else if (g.belongs(Party.ENEMY)) {
+			} else if (g.belongs(Party.ENEMY) && g.getPosition() == enemyActivingGirl) {
 				enemyNextGirl();
 			}
 		});
@@ -321,8 +329,9 @@ public class GameManager {
 	// 抽卡处理和抽卡堆叠处理
 	private void drrraaaaaaaawCards(ArrayList<Card> deck, int times, boolean isMyTurn) {
 		boolean gameover = false;
-		// 如果牌库被抽空，则将墓地洗入牌库后（此时墓地为空则判负），再进行抽卡
+		// 抽卡次数
 		for (int i = 0; i < times; i++) {
+			// 如果牌库被抽空，则将墓地（墓地也为空则判负）洗入牌库后，再进行抽卡
 			if (deck.stream().noneMatch(c -> c.isIn(Zone.LIBRARY))) {
 				if (deck.stream().noneMatch(c -> c.isIn(Zone.GRAVEYARD))) {
 					// 判负
@@ -331,17 +340,25 @@ public class GameManager {
 					break;
 				}
 				deck.stream().filter(c -> c.isIn(Zone.GRAVEYARD)).forEach(c -> c.putInto(Zone.LIBRARY));
+				if (isMyTurn){
+					playerDeckResetTimes++;
+					System.out.println("我方第" + playerDeckResetTimes + "次重洗★");
+				} else {
+					enemyDeckResetTimes++;
+					System.out.println("敌方第" + enemyDeckResetTimes + "次重洗★");
+				}
 			}
 			// 抽卡处理，将一张卡从牌库置入抽卡堆叠
 			deck.stream().filter(c -> c.isIn(Zone.LIBRARY)).findFirst().get().putInto(Zone.DRAWSTACK);
 		}
-		// 堆叠处理
+		// 无法抽卡则返回
 		if (gameover) {
 			phase = 999;
 			return;
 		}
+		// 堆叠处理
 		drawStackResolve(isMyTurn);
-		// 额外抽卡数消化
+		// 堆叠中卡牌特效所得的额外抽卡数处理
 		if (isMyTurn) {
 			if (playerExtraDraws > 0) {
 				int exdraws = playerExtraDraws;

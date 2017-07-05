@@ -51,7 +51,8 @@ public class Girl extends BaseObject {
 		return position;
 	}
 
-	public ArrayList<Card> getMainDeck() {
+	public ArrayList<Card> getMainDeck(Party p) {
+		mainDeck.stream().forEach(c -> c.setBelong(p));
 		return mainDeck;
 	}
 
@@ -102,7 +103,7 @@ class GirlsPool {
 			break;
 		}
 		for (int id : c) {
-			deck.add(new Card(i, Party.DEFAULT));
+			deck.add(new Card(id, Party.DEFAULT));
 		}
 		return deck;
 	}

@@ -30,6 +30,7 @@ public class Card extends BaseObject {
 	public void putInto(Zone z) {
 		zone = z;
 	}
+	
 	// 以上Sets
 }
 

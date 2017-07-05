@@ -79,6 +79,9 @@ public abstract class BaseObject {
 	public void removeBuff(int buffId) {
 
 	}
+	public void setBelong(Party p){
+		party = p;
+	}
 
 	public void reciveGameData(HashMap<String, Object> data) {
 		gameData = data;
