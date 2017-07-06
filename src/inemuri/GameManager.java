@@ -2,7 +2,7 @@ package inemuri;
 
 public class GameManager {
 
-	GameBattle battle = new GameBattle();
+	GameBattle battle = new GameBattle(null, null);
 
 	public void mainUpdate(){
 		battle.update();

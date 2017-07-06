@@ -30,7 +30,7 @@ public class GameBattle {
 	private int attackP, shieldP, focusP, attackE, shieldE, focusE; // 回合内伤害值,护盾加值,集中值,P=Player,E=Enemy
 	private HashMap<String, Integer> gameData; // 以上各项int数据的容器，传给卡牌和角色使用
 
-	GameBattle() {
+	GameBattle(ArrayList<Girl> player, ArrayList<Girl> enemie) {
 		playerTeam = new ArrayList<Girl>();
 		enemyTeam = new ArrayList<Girl>();
 		playerDeck = new ArrayList<Card>();
@@ -165,6 +165,8 @@ public class GameBattle {
 	private void runTurnEndProcess() {
 		// 清空回合内伤害值,护盾加值,集中值
 		attackP = shieldP = focusP = attackE = shieldE = focusE = 0;
+		checkBuffs();
+		checkParty();
 		turns++;
 	}
 
@@ -237,8 +239,7 @@ public class GameBattle {
 		activeBuffs.sort((b1, b2) -> Integer.compare(b1.getPriority(), b2.getPriority()));
 		// 将对决数据传给buff，进行buff主处理，接收返回的对局数据
 		activeBuffs.forEach(b -> {
-			getNowGameData();
-			b.updateGameData(gameData, allGirls, allCards, activeBuffs);
+			b.updateGameData(getNowGameData(), allGirls, allCards, activeBuffs);
 			b.run();
 			setModifiedGameDataFromBuff(b);
 		});
@@ -273,6 +274,34 @@ public class GameBattle {
 			System.out.println((p && e ? "平局★" : p ? "敌方胜利★" : "我方胜利★"));
 		}
 		return gameover;
+	}
+
+	// 我方下一个角色行动
+	private void playerNextGirl() {
+		boolean flag = false;
+		while (flag == false) {
+			// 直到行动标识移动到非战斗不能的队员身上才跳出
+			playerActivingGirl += playerActivingGirl < playerTeamSize - 1 ? 1 : -(playerTeamSize - 1);
+			if (playerTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == playerActivingGirl)) {
+				Girl g = playerTeam.get(playerActivingGirl);
+				flag = true;
+				System.out.println("轮到我方【" + g.getName() + "】行动★HP:" + g.getHp() + " SHIELD:" + g.getShield());
+			}
+		}
+	}
+
+	// 敌方下一个角色行动
+	private void enemyNextGirl() {
+		boolean flag = false;
+		while (flag == false) {
+			// 直到行动标识移动到非战斗不能的队员身上才跳出
+			enemyActivingGirl += enemyActivingGirl < enemyTeamSize - 1 ? 1 : -(enemyTeamSize - 1);
+			if (enemyTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == enemyActivingGirl)) {
+				Girl g = enemyTeam.get(enemyActivingGirl);
+				flag = true;
+				System.out.println("轮到敌方【" + g.getName() + "】行动★HP:" + g.getHp() + " SHIELD:" + g.getShield());
+			}
+		}
 	}
 
 	// 抽卡处理和抽卡堆叠处理
@@ -338,35 +367,7 @@ public class GameBattle {
 		});
 	}
 
-	// 我方下一个角色行动
-	private void playerNextGirl() {
-		boolean flag = false;
-		while (flag == false) {
-			// 直到行动标识移动到非战斗不能的队员身上才跳出
-			playerActivingGirl += playerActivingGirl < playerTeamSize - 1 ? 1 : -(playerTeamSize - 1);
-			if (playerTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == playerActivingGirl)) {
-				Girl g = playerTeam.get(playerActivingGirl);
-				flag = true;
-				System.out.println("轮到我方【" + g.getName() + "】行动★HP:" + g.getHp() + " SHIELD:" + g.getShield());
-			}
-		}
-	}
-
-	// 敌方下一个角色行动
-	private void enemyNextGirl() {
-		boolean flag = false;
-		while (flag == false) {
-			// 直到行动标识移动到非战斗不能的队员身上才跳出
-			enemyActivingGirl += enemyActivingGirl < enemyTeamSize - 1 ? 1 : -(enemyTeamSize - 1);
-			if (enemyTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == enemyActivingGirl)) {
-				Girl g = enemyTeam.get(enemyActivingGirl);
-				flag = true;
-				System.out.println("轮到敌方【" + g.getName() + "】行动★HP:" + g.getHp() + " SHIELD:" + g.getShield());
-			}
-		}
-	}
-
-	// 出卡堆叠计算(P = player, E = Enemy)
+	// 出牌堆叠计算(P = player, E = Enemy)
 	private void playStackResolve() {
 		// 属性容器
 		ArrayList<Element> collectorP = new ArrayList<Element>();
@@ -392,20 +393,20 @@ public class GameBattle {
 		System.out.println("我方★DMG:" + attackP + "/SHD:" + shieldP + "/FUS:" + focusP);
 		System.out.println("敌方★DMG:" + attackE + "/SHD:" + shieldE + "/FUS:" + focusE);
 		// 造成普攻伤害
-		if (focusP > focusE){
+		if (focusP > focusE) {
 			System.out.println("我方先手★");
 			girlP.shieldDamage(-shieldP);
 			girlE.hpDamage(attackP);
-			if (girlE.getHp() > 0){
+			if (girlE.getHp() > 0) {
 				System.out.println("敌方的反撃★");
 				girlE.shieldDamage(-shieldE);
 				girlP.hpDamage(attackE);
 			}
-		} else if (focusP < focusE){
+		} else if (focusP < focusE) {
 			System.out.println("敌方先手★");
 			girlE.shieldDamage(-shieldE);
 			girlP.hpDamage(attackE);
-			if (girlP.getHp() > 0){
+			if (girlP.getHp() > 0) {
 				System.out.println("我方的反撃★");
 				girlP.shieldDamage(-shieldP);
 				girlE.hpDamage(attackP);
@@ -448,7 +449,6 @@ public class GameBattle {
 	// 将被BUFF修正的数据回传
 	private void setModifiedGameDataFromBuff(Buff b) {
 		gameData = b.returnGameData();
-		turns = gameData.get("turns");
 		playerTeamSize = gameData.get("playerTeamSize");
 		enemyTeamSize = gameData.get("enemyTeamSize");
 		playerActivingGirl = gameData.get("playerActivingGirl");
@@ -467,7 +467,8 @@ public class GameBattle {
 		focusE = gameData.get("focusE");
 	}
 
-	private void getNowGameData() {
+	// 更新容器中的对局数据
+	private HashMap<String, Integer> getNowGameData() {
 		gameData.put("turns", turns);
 		gameData.put("phase", phase);
 		gameData.put("playerTeamSize", playerTeamSize);
@@ -486,5 +487,6 @@ public class GameBattle {
 		gameData.put("attackE", attackE);
 		gameData.put("shieldE", shieldE);
 		gameData.put("focusE", focusE);
+		return gameData;
 	}
 }

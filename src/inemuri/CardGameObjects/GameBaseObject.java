@@ -14,7 +14,7 @@ public abstract class GameBaseObject {
 	protected String nameIcon; // 图标文件名
 	protected String description; // 说明文
 	// 战斗用
-	protected Party party; // 所属
+	protected Party party; // 阵营
 	protected boolean disabled; // 不可用的情况
 	protected ArrayList<Buff> buffs; // 状态
 	protected ArrayList<Element> elements; // 主属性

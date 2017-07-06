@@ -1,5 +1,6 @@
 package inemuri.CardGameObjects.Enum;
 
+// 阵营
 public enum Party {
 	// 默认
 	DEFAULT,

@@ -28,11 +28,7 @@ public class Girl extends GameBaseObject {
 		mainDeck = new ArrayList<Card>();
 		GirlsPool.addDeck(mainDeck, i);
 		GirlsPool.addElements(elements, i);
-
-		if (id == 5){
-			buffs.add(new Buff(4));
-			buffs.get(0).setEnemy(true);
-		}
+		GirlsPool.addBuffs(buffs, i, party);
 	}
 
 	// Gets
@@ -86,7 +82,7 @@ public class Girl extends GameBaseObject {
 	}
 
 	public void shieldDamage(int i) {
-		System.out.println(name + "展開" + -i + "点护盾★");
+		System.out.println(name + "在自身周围张开了" + -i + "点护盾★");
 		SHD -= i;
 	}
 
@@ -152,6 +148,15 @@ class GirlsPool {
 		case 6:// 7
 			list.add(new Element("妖", 0));
 			break;
+		}
+	}
+
+	public static void addBuffs(ArrayList<Buff> buffs, int i, Party p) {
+		switch (i) {
+		case 5:
+			buffs.add(new Buff(4, p));
+			break;
+
 		}
 	}
 }

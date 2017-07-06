@@ -20,13 +20,8 @@ public class Card extends GameBaseObject {
 		type = CardsPool.type[i];
 		zone = Zone.DEFAULT;
 		CardsPool.addElements(elements, i);
+		CardsPool.addBuffs(buffs, i, party);
 
-		if (i == 13) {
-			buffs.add(new Buff(1));
-		}
-		if (i == 16) {
-			buffs.add(new Buff(2));
-		}
 	}
 
 	// Gets
@@ -53,16 +48,16 @@ public class Card extends GameBaseObject {
 
 class CardsPool {
 	static String[] name = { "DefaultName", "灵", "魔", "妖", "神", "幻", "源", "心", "无", "盾", "集", "二重结界", "御币", "塞钱征收",
-			"迷你八卦炉", "光尘", "魔力吸收", "蛇蛙发饰" };
+			"迷你八卦炉", "光尘", "魔力反馈", "蛇蛙发饰" };
 	static String[] description = { "DefaultRuleText", // 默认
 			"【灵】", "【魔】", "【妖】", "【神】", "【幻】", "【源】", "【心】", "【无】", "【盾】", "【集】", // 基础卡
-			"【盾】增强1", // 二重结界
+			"【盾增幅1】", // 二重结界
 			"【灵】【盾】", // 御币
 			"如成功对敌方队伍造成HP伤害,下回合抽牌阶段额外抽三张卡", // 塞钱征收
 			"【魔】【魔】", // 迷你八卦炉
-			"【魔】增强1", // 光尘
-			"敌方取得先手且敌方本回合使用过【魔】的话,【魔】增强3", // 魔力吸收
-			"【盾】【集】 / 从手牌进入弃牌区时，己方全体恢复10点HP" }; // 蛇蛙发饰
+			"【魔增幅1】", // 光尘
+			"被敌方取得先手的情况下,己方本次攻击获得10*N的伤害加值,N等同于敌方本回合使用的【魔】一半的值", // 魔力吸收
+			"【盾】【集】 / 从手牌进入弃牌区时，己方全体恢复50点HP" }; // 蛇蛙发饰
 	static Type[] type = { Type.DEFAULT, Type.ATTACK, Type.ATTACK, Type.ATTACK, Type.ATTACK, Type.ATTACK, Type.ATTACK,
 			Type.ATTACK, Type.ATTACK, Type.DEFENCE, Type.FOCUS, Type.SEAL, Type.EQUIPMENT, Type.EVENT, Type.EQUIPMENT,
 			Type.MAGIC, Type.MAGIC, Type.EQUIPMENT };
@@ -83,7 +78,7 @@ class CardsPool {
 			case 14:// 迷你八卦炉
 				list.add(new Element("魔", 2));
 				break;
-			case 15:// 光尘[
+			case 15:// 光尘
 				list.add(new Element("魔", 0, 1, 1));
 				break;
 			case 17:// 蛇蛙发饰
@@ -91,6 +86,17 @@ class CardsPool {
 				list.add(new Element("集", 1));
 				break;
 			}
+		}
+	}
+
+	public static void addBuffs(ArrayList<Buff> buffs, int i, Party p) {
+		switch (i) {
+		case 13: // 塞钱征收
+			buffs.add(new Buff(1, p));
+			break;
+		case 16: // 魔力反馈
+			buffs.add(new Buff(2, p));
+			break;
 		}
 	}
 
