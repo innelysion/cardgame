@@ -28,6 +28,11 @@ public class Girl extends GameBaseObject {
 		mainDeck = new ArrayList<Card>();
 		GirlsPool.addDeck(mainDeck, i);
 		GirlsPool.addElements(elements, i);
+
+		if (id == 5){
+			buffs.add(new Buff(4));
+			buffs.get(0).setEnemy(true);
+		}
 	}
 
 	// Gets
@@ -63,12 +68,26 @@ public class Girl extends GameBaseObject {
 	// 以上Gets
 	// Sets
 	public void hpDamage(int i) {
-		System.out.println(name + "HP" + (i < 0 ? "+" : "-") + i + "★");
-		HP -= i;
+		int result = i;
+		if (i > 0 && SHD > 0) {
+			if (SHD >= result) {
+				SHD -= result;
+				System.out.println(name + "受到护盾伤害★" + result + "点★");
+				result = 0;
+				return;
+			} else {
+				result -= SHD;
+				System.out.println(name + "受到护盾伤害★" + SHD + "点★");
+				SHD = 0;
+			}
+		}
+		System.out.println(name + "受到耐久伤害★" + result + "点★");
+		HP -= result;
 	}
 
 	public void shieldDamage(int i) {
-		SHD += i;
+		System.out.println(name + "展開" + -i + "点护盾★");
+		SHD -= i;
 	}
 
 	public void setPosition(int i) {

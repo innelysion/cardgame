@@ -120,6 +120,8 @@ public class GameBattle {
 		}
 		playerNextGirl();
 		enemyNextGirl();
+		checkBuffs();
+		checkParty();
 	}
 
 	// 阶段3: 双方抽卡环节
@@ -154,7 +156,7 @@ public class GameBattle {
 		});
 	}
 
-	// 阶段8: 战斗及结算环节
+	// 阶段9: 战斗及结算环节
 	private void runBattleProcess() {
 		playStackResolve();
 	}
@@ -384,19 +386,42 @@ public class GameBattle {
 		shieldE = collectValue(new String[] { "盾" }, collectorE, girlE) * girlE.getDef();
 		focusP = collectValue(new String[] { "集" }, collectorP, girlP);
 		focusE = collectValue(new String[] { "集" }, collectorE, girlE);
+		// 进行特效处理
+		checkBuffs();
 		// debug信息
 		System.out.println("我方★DMG:" + attackP + "/SHD:" + shieldP + "/FUS:" + focusP);
 		System.out.println("敌方★DMG:" + attackE + "/SHD:" + shieldE + "/FUS:" + focusE);
-		// 进行特效处理
-		checkBuffs();
 		// 造成普攻伤害
-		girlP.hpDamage(attackE - shieldP);
-		girlE.hpDamage(attackP - shieldE);
-		checkGameOver();
+		if (focusP > focusE){
+			System.out.println("我方先手★");
+			girlP.shieldDamage(-shieldP);
+			girlE.hpDamage(attackP);
+			if (girlE.getHp() > 0){
+				System.out.println("敌方的反撃★");
+				girlE.shieldDamage(-shieldE);
+				girlP.hpDamage(attackE);
+			}
+		} else if (focusP < focusE){
+			System.out.println("敌方先手★");
+			girlE.shieldDamage(-shieldE);
+			girlP.hpDamage(attackE);
+			if (girlP.getHp() > 0){
+				System.out.println("我方的反撃★");
+				girlP.shieldDamage(-shieldP);
+				girlE.hpDamage(attackP);
+			}
+		} else {
+			System.out.println("敌我同時行動★");
+			girlP.shieldDamage(-shieldP);
+			girlE.shieldDamage(-shieldE);
+			girlP.hpDamage(attackE);
+			girlE.hpDamage(attackP);
+		}
+		checkParty();
 		System.out.println("【" + girlP.getName() + "】★HP:" + girlP.getHp() + " SHIELD:" + girlP.getShield());
 		System.out.println("【" + girlE.getName() + "】★HP:" + girlE.getHp() + " SHIELD:" + girlE.getShield());
 		// 将堆叠中结算完毕的卡牌丢入弃牌区
-		allCards.stream().filter(c -> c.isIn(Zone.PLAYSTACK)).forEach(c -> {
+		allCards.stream().filter(c -> c.isIn(Zone.PLAYSTACK) || c.isIn(Zone.COSTSTACK)).forEach(c -> {
 			c.putInto(Zone.GRAVEYARD);
 		});
 	}
@@ -407,8 +432,8 @@ public class GameBattle {
 		// 按传入的名称数组寻找同名属性并计算效果合计值，加到结果上
 		for (String n : name) {
 			result += list.stream().filter(e -> e.getName() == n).mapToInt(e -> {
-				// 比较是否和角色主属性匹配，匹配则效果翻倍
-				int mainMod = e.anySameIn(girl.getElements()) ? 2 : 1;
+				// 比较是否和角色主属性匹配，匹配则效果翻x倍
+				int mainMod = e.anySameIn(girl.getElements()) ? GameSetting.mainElementMultiply : 1;
 				if (e.getValueBase() >= 0) {
 					return (e.getValueBase() * mainMod + e.getValueAddMod()) * e.getValueMultiMod();
 				} else {
@@ -424,7 +449,6 @@ public class GameBattle {
 	private void setModifiedGameDataFromBuff(Buff b) {
 		gameData = b.returnGameData();
 		turns = gameData.get("turns");
-		phase = gameData.get("phase");
 		playerTeamSize = gameData.get("playerTeamSize");
 		enemyTeamSize = gameData.get("enemyTeamSize");
 		playerActivingGirl = gameData.get("playerActivingGirl");

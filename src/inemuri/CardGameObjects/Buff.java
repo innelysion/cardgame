@@ -54,20 +54,28 @@ public class Buff {
 				if (attackP > shieldE + enemyTeam.stream().filter(g -> g.getPosition() == enemyActivingGirl).findFirst()
 						.get().getShield()) {
 					playerExtraDraws += 3;
-					System.out.println("★★塞钱征收生效★★");
+					System.out.println("●●●塞钱征收生效●●●下回合抽牌阶段额外抽三张卡");
 				}
 			}
 			break;
 		case 2: // B魔力吸收("敌方取得先手且敌方本回合使用过【魔】的话,【魔】增强3")
-			if (playerDeck.stream().filter(c -> c.getBuffs().contains(this)).anyMatch(c -> c.isIn(Zone.GRAVEYARD))) {
-				if (enemyDeck.stream().filter(c -> c.isIn(Zone.PLAYSTACK))
+			if (focusP < focusE && playerDeck.stream().filter(c -> c.getBuffs().contains(this))
+					.anyMatch(c -> c.isIn(Zone.GRAVEYARD))) {
+				if (enemyDeck.stream().filter(c -> c.isIn(Zone.PLAYSTACK) || c.isIn(Zone.COSTSTACK))
 						.anyMatch(c -> c.getElements().stream().anyMatch(e -> e.getName() == "魔"))) {
 					attackP += 100;
-					System.out.println("★★魔力吸收生效★★");
+					System.out.println("●●●魔力吸收生效●●●【魔】增强3");
 				}
 			}
 			break;
 		case 3: // B蛇蛙发饰
+			break;
+		case 4: // Bリグルpassive
+			if (playerTeam.stream().filter(c -> c.getBuffs().contains(this)).anyMatch(g -> g.getHp() < 0)) {
+				System.out.println("●●●リグル自爆●●●");
+				enemyTeam.forEach(g -> g.hpDamage(300));
+				isActive = false;
+			}
 			break;
 		}
 	}
@@ -143,7 +151,6 @@ public class Buff {
 	// 更新和回传buff生效后的int类对局数据(角色/卡牌/BUFF是引用直接修改不用回传)
 	public HashMap<String, Integer> returnGameData() {
 		gameData.put("turns", turns);
-		gameData.put("phase", phase);
 		gameData.put(isEnemy ? "enemyTeamSize" : "playerTeamSize", playerTeamSize);
 		gameData.put(isEnemy ? "playerTeamSize" : "enemyTeamSize", enemyTeamSize);
 		gameData.put(isEnemy ? "enemyActivingGirl" : "playerActivingGirl", playerActivingGirl);

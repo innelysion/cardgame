@@ -8,6 +8,8 @@ import inemuri.CardGameObjects.Enum.Zone;
 
 // 全局变量
 public class GameSetting {
+
+	static int mainElementMultiply = 2;
 	static Predicate<Card> legalCheck = c -> //
 	(c.isIn(Zone.PLAYSTACK) && (c.isType(Type.ATTACK) || c.isType(Type.DEFENCE) || c.isType(Type.FOCUS))) || //
 			(c.isIn(Zone.LIBRARY) && c.isType(Type.SEAL)) || //
