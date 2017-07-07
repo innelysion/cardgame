@@ -30,11 +30,13 @@ public class GameBattle {
 	private int attackP, shieldP, focusP, attackE, shieldE, focusE; // 回合内伤害值,护盾加值,集中值,P=Player,E=Enemy
 	private HashMap<String, Integer> gameData; // 以上各项int数据的容器，传给卡牌和角色使用
 
-	GameBattle(ArrayList<Girl> player, ArrayList<Girl> enemie) {
+	GameBattle(ArrayList<Girl> girls) {
 		playerTeam = new ArrayList<Girl>();
 		enemyTeam = new ArrayList<Girl>();
 		playerDeck = new ArrayList<Card>();
 		enemyDeck = new ArrayList<Card>();
+		allGirls = new ArrayList<Girl>();
+		allCards = new ArrayList<Card>();
 
 		turns = 0;
 		phase = -1;
@@ -46,7 +48,15 @@ public class GameBattle {
 		attackP = shieldP = focusP = attackE = shieldE = focusE = 0;
 		gameData = new HashMap<String, Integer>();
 
-		getNowGameData();
+		girls.stream().filter(g -> g.belongs(Party.ALLY)).forEach(g -> playerTeam.add(g));
+		girls.stream().filter(g -> g.belongs(Party.ENEMY)).forEach(g -> enemyTeam.add(g));
+		playerTeam.stream().forEach(g -> playerDeck.addAll(g.getMainDeck()));
+		enemyTeam.stream().forEach(g -> enemyDeck.addAll(g.getMainDeck()));
+		// 设置全体引用
+		allGirls.addAll(playerTeam);
+		allGirls.addAll(enemyTeam);
+		allCards.addAll(playerDeck);
+		allCards.addAll(enemyDeck);
 	}
 
 	// 对局主循环
@@ -172,42 +182,8 @@ public class GameBattle {
 
 	// 阶段-1：对局初始化环节（只会在对决开始运行一次）
 	private void runGameStartProcess() {
-		// 添加角色，设置位置
-		playerTeam.add(new Girl(1, Party.ALLY));
-		playerTeam.add(new Girl(2, Party.ALLY));
-		playerTeam.add(new Girl(3, Party.ALLY));
-		enemyTeam.add(new Girl(4, Party.ENEMY));
-		enemyTeam.add(new Girl(5, Party.ENEMY));
-		enemyTeam.add(new Girl(6, Party.ENEMY));
-		playerTeam.get(0).setPosition(1);
-		playerTeam.get(1).setPosition(2);
-		playerTeam.get(2).setPosition(0);
-		enemyTeam.get(0).setPosition(0);
-		enemyTeam.get(1).setPosition(1);
-		enemyTeam.get(2).setPosition(2);
 
-		// 添加卡组
-		System.out.print("我方参战角色★");
-		playerTeam.stream().forEach(g -> {
-			System.out.print("【" + g.getName() + "】");
-			playerDeck.addAll(g.getMainDeck(Party.ALLY));
-		});
-		System.out.println();
-		System.out.print("敌方参战角色★");
-		enemyTeam.stream().forEach(g -> {
-			System.out.print("【" + g.getName() + "】");
-			enemyDeck.addAll(g.getMainDeck(Party.ENEMY));
-		});
-		System.out.println();
-
-		// 设置全体引用
-		allGirls = new ArrayList<Girl>();
-		allCards = new ArrayList<Card>();
-		allGirls.addAll(playerTeam);
-		allGirls.addAll(enemyTeam);
-		allCards.addAll(playerDeck);
-		allCards.addAll(enemyDeck);
-
+		getNowGameData();
 		// 洗牌
 		playerDeck.forEach(c -> c.putInto(Zone.LIBRARY));
 		enemyDeck.forEach(c -> c.putInto(Zone.LIBRARY));
@@ -226,7 +202,6 @@ public class GameBattle {
 
 	// 以上为各阶段主处理
 	/////////////////////////////////////////////////////////////////////////////////
-
 	// buff效果判定
 	private void checkBuffs() {
 		// 获取所有角色和卡牌中激活的buff
@@ -283,9 +258,9 @@ public class GameBattle {
 			// 直到行动标识移动到非战斗不能的队员身上才跳出
 			playerActivingGirl += playerActivingGirl < playerTeamSize - 1 ? 1 : -(playerTeamSize - 1);
 			if (playerTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == playerActivingGirl)) {
-				Girl g = playerTeam.get(playerActivingGirl);
 				flag = true;
-				System.out.println("轮到我方【" + g.getName() + "】行动★HP:" + g.getHp() + " SHIELD:" + g.getShield());
+				System.out.println("轮到我方【" + playerMovingGirl().getName() + "】行动★HP:" + playerMovingGirl().getHp()
+						+ " SHIELD:" + playerMovingGirl().getShield());
 			}
 		}
 	}
@@ -297,11 +272,19 @@ public class GameBattle {
 			// 直到行动标识移动到非战斗不能的队员身上才跳出
 			enemyActivingGirl += enemyActivingGirl < enemyTeamSize - 1 ? 1 : -(enemyTeamSize - 1);
 			if (enemyTeam.stream().anyMatch(g -> !g.isDead() && g.getPosition() == enemyActivingGirl)) {
-				Girl g = enemyTeam.get(enemyActivingGirl);
 				flag = true;
-				System.out.println("轮到敌方【" + g.getName() + "】行动★HP:" + g.getHp() + " SHIELD:" + g.getShield());
+				System.out.println("轮到敌方【" + enemyMovingGirl().getName() + "】行动★HP:" + enemyMovingGirl().getHp()
+						+ " SHIELD:" + enemyMovingGirl().getShield());
 			}
 		}
+	}
+
+	private Girl playerMovingGirl() {
+		return playerTeam.stream().filter(g -> g.getPosition() == playerActivingGirl).findFirst().get();
+	}
+
+	private Girl enemyMovingGirl() {
+		return enemyTeam.stream().filter(g -> g.getPosition() == enemyActivingGirl).findFirst().get();
 	}
 
 	// 抽卡处理和抽卡堆叠处理
@@ -373,20 +356,26 @@ public class GameBattle {
 		ArrayList<Element> collectorP = new ArrayList<Element>();
 		ArrayList<Element> collectorE = new ArrayList<Element>();
 		// 当前行动的对象
-		Girl girlP = playerTeam.get(playerActivingGirl);
-		Girl girlE = enemyTeam.get(enemyActivingGirl);
+		Girl girlP = playerMovingGirl();
+		Girl girlE = enemyMovingGirl();
+		Girl frontP = playerTeam.stream().sorted((g1, g2) -> g1.getPosition() - g2.getPosition()).filter(g -> !g.isDead()).findFirst().get();
+		Girl frontE = enemyTeam.stream().sorted((g1, g2) -> g1.getPosition() - g2.getPosition()).filter(g -> !g.isDead()).findFirst().get();
 		// 收集所有处于合法生效区域卡牌的属性
 		playerDeck.stream().filter(GameSetting.legalCheck)
 				.forEach(c -> c.getElements().forEach(e -> e.addSameTo(collectorP)));
 		enemyDeck.stream().filter(GameSetting.legalCheck)
 				.forEach(c -> c.getElements().forEach(e -> e.addSameTo(collectorE)));
 		// 将收集到的属性加在回合内伤害/护盾/集中值上
+		System.out.println("我方★");
 		attackP = collectValue(GameSetting.ATKElements, collectorP, girlP) * girlP.getAtk();
-		attackE = collectValue(GameSetting.ATKElements, collectorE, girlE) * girlE.getAtk();
 		shieldP = collectValue(new String[] { "盾" }, collectorP, girlP) * girlP.getDef();
-		shieldE = collectValue(new String[] { "盾" }, collectorE, girlE) * girlE.getDef();
 		focusP = collectValue(new String[] { "集" }, collectorP, girlP);
+		System.out.println();
+		System.out.println("敌方★");
+		attackE = collectValue(GameSetting.ATKElements, collectorE, girlE) * girlE.getAtk();
+		shieldE = collectValue(new String[] { "盾" }, collectorE, girlE) * girlE.getDef();
 		focusE = collectValue(new String[] { "集" }, collectorE, girlE);
+		System.out.println();
 		// 进行特效处理
 		checkBuffs();
 		// debug信息
@@ -396,27 +385,27 @@ public class GameBattle {
 		if (focusP > focusE) {
 			System.out.println("我方先手★");
 			girlP.shieldDamage(-shieldP);
-			girlE.hpDamage(attackP);
+			frontE.hpDamage(attackP);
 			if (girlE.getHp() > 0) {
 				System.out.println("敌方的反撃★");
 				girlE.shieldDamage(-shieldE);
-				girlP.hpDamage(attackE);
+				frontP.hpDamage(attackE);
 			}
 		} else if (focusP < focusE) {
 			System.out.println("敌方先手★");
 			girlE.shieldDamage(-shieldE);
-			girlP.hpDamage(attackE);
+			frontP.hpDamage(attackE);
 			if (girlP.getHp() > 0) {
 				System.out.println("我方的反撃★");
 				girlP.shieldDamage(-shieldP);
-				girlE.hpDamage(attackP);
+				frontE.hpDamage(attackP);
 			}
 		} else {
 			System.out.println("敌我同時行動★");
 			girlP.shieldDamage(-shieldP);
 			girlE.shieldDamage(-shieldE);
-			girlP.hpDamage(attackE);
-			girlE.hpDamage(attackP);
+			frontP.hpDamage(attackE);
+			frontE.hpDamage(attackP);
 		}
 		checkParty();
 		System.out.println("【" + girlP.getName() + "】★HP:" + girlP.getHp() + " SHIELD:" + girlP.getShield());
@@ -436,7 +425,9 @@ public class GameBattle {
 				// 比较是否和角色主属性匹配，匹配则效果翻x倍
 				int mainMod = e.anySameIn(girl.getElements()) ? GameSetting.mainElementMultiply : 1;
 				if (e.getValueBase() >= 0) {
-					return (e.getValueBase() * mainMod + e.getValueAddMod()) * e.getValueMultiMod();
+					int single = (e.getValueBase() * mainMod + e.getValueAddMod()) * e.getValueMultiMod();
+					System.out.print("【" + e.getName() + "】提供" + single + "点基準属性/");
+					return single;
 				} else {
 					// 如果属性基础值小于0则直接返回0（治疗不在此计算）
 					return 0;

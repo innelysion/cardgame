@@ -56,8 +56,8 @@ public class Girl extends GameBaseObject {
 		return position;
 	}
 
-	public ArrayList<Card> getMainDeck(Party p) {
-		mainDeck.stream().forEach(c -> c.setBelong(p));
+	public ArrayList<Card> getMainDeck() {
+		mainDeck.stream().forEach(c -> c.setBelong(party));
 		return mainDeck;
 	}
 
