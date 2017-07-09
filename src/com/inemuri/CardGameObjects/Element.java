@@ -1,4 +1,4 @@
-package inemuri.CardGameObjects;
+package com.inemuri.CardGameObjects;
 
 import java.util.ArrayList;
 

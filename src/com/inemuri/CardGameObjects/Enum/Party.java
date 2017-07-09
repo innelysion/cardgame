@@ -1,4 +1,4 @@
-package inemuri.CardGameObjects.Enum;
+package com.inemuri.CardGameObjects.Enum;
 
 // 阵营
 public enum Party {

@@ -1,16 +1,16 @@
-package inemuri;
+package com.inemuri;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 
-import inemuri.CardGameObjects.Buff;
-import inemuri.CardGameObjects.Card;
-import inemuri.CardGameObjects.Element;
-import inemuri.CardGameObjects.Girl;
-import inemuri.CardGameObjects.Enum.Party;
-import inemuri.CardGameObjects.Enum.Type;
-import inemuri.CardGameObjects.Enum.Zone;
+import com.inemuri.CardGameObjects.Buff;
+import com.inemuri.CardGameObjects.Card;
+import com.inemuri.CardGameObjects.Element;
+import com.inemuri.CardGameObjects.Girl;
+import com.inemuri.CardGameObjects.Enum.Party;
+import com.inemuri.CardGameObjects.Enum.Type;
+import com.inemuri.CardGameObjects.Enum.Zone;
 
 public class GameBattle {
 	// 队伍和卡组
@@ -29,6 +29,7 @@ public class GameBattle {
 	private int playerDeckResetTimes, enemyDeckResetTimes; // 牌库抓空后重置次数
 	private int attackP, shieldP, focusP, attackE, shieldE, focusE; // 回合内伤害值,护盾加值,集中值,P=Player,E=Enemy
 	private HashMap<String, Integer> gameData; // 以上各项int数据的容器，传给卡牌和角色使用
+	protected static int aa;
 
 	GameBattle(ArrayList<Girl> girls) {
 		playerTeam = new ArrayList<Girl>();
@@ -42,7 +43,7 @@ public class GameBattle {
 		phase = -1;
 		playerTeamSize = enemyTeamSize = 3;
 		playerActivingGirl = enemyActivingGirl = -1;
-		playerHandSize = enemyHandSize = 10;
+		playerHandSize = enemyHandSize = 6;
 		playerExtraDraws = enemyExtraDraws = 0;
 		playerDeckResetTimes = enemyDeckResetTimes = 0;
 		attackP = shieldP = focusP = attackE = shieldE = focusE = 0;
@@ -211,7 +212,7 @@ public class GameBattle {
 		allGirls.stream().map(c -> c.getBuffs()).forEach(
 				list -> list.stream().filter(buff -> buff.isActive()).forEach(legalbuff -> activeBuffs.add(legalbuff)));
 		// 按优先度排序(优先度越大越靠后结算)
-		activeBuffs.sort((b1, b2) -> Integer.compare(b1.getPriority(), b2.getPriority()));
+		activeBuffs.sort((b1, b2) -> b1.getPriority() - b2.getPriority());
 		// 将对决数据传给buff，进行buff主处理，接收返回的对局数据
 		activeBuffs.forEach(b -> {
 			b.updateGameData(getNowGameData(), allGirls, allCards, activeBuffs);

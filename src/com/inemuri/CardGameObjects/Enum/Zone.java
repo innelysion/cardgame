@@ -1,4 +1,4 @@
-package inemuri.CardGameObjects.Enum;
+package com.inemuri.CardGameObjects.Enum;
 
 public enum Zone {
 	// 默认

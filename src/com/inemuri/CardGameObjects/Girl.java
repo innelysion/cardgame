@@ -1,8 +1,9 @@
-package inemuri.CardGameObjects;
+package com.inemuri.CardGameObjects;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
-import inemuri.CardGameObjects.Enum.Party;
+import com.inemuri.CardGameObjects.Enum.Party;
 
 public class Girl extends GameBaseObject {
 	// 战斗用
@@ -13,6 +14,14 @@ public class Girl extends GameBaseObject {
 	private int DEF; // 防御力
 	private int position; // 队伍中位置
 	private ArrayList<Card> mainDeck; // 主卡组
+
+	// TODO 成长 
+	private int level; // 等级
+	private int exp; // 当前经验
+	private ArrayList<Integer> expRequest; // 升级所需经验表
+	private int HPGrowth; // 每级耐久成长率
+	private HashMap<Integer, Integer> ATKGrowth; // 特定等级攻击成长值
+	private HashMap<Integer, Integer> DEFGrowth; // 特定等级防御成长值
 
 	public Girl(int i, Party p) {
 		super();
@@ -93,11 +102,12 @@ public class Girl extends GameBaseObject {
 
 }
 
+// TODO 角色数据库
 class GirlsPool {
 	static String[] name = { "DEFAULT_NAME", "博丽灵梦", "雾雨魔理沙", "东风谷早苗", "琪露诺", "莉格露", "露米娅" };
 	static int[] maxhp = { 1, 600, 600, 600, 450, 550, 700 };
 	static int[] atk = { 1, 6, 7, 5, 4, 5, 4 };
-	static int[] def = { 1, 6, 5, 7, 3, 2, 4 };
+	static int[] def = { 1, 6, 5, 7, 9, 9, 9 };
 
 	static void addDeck(ArrayList<Card> deck, int i) {
 		int[] c = null;
@@ -112,13 +122,19 @@ class GirlsPool {
 			c = new int[] { 1, 1, 1, 4, 4, 4, 5, 5, 5, 9, 9, 9, 9, 9, 9, 10, 10, 12, 17 };
 			break;
 		case 4: // 9
-			c = new int[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 9, 9, 9, 10, 10 };
+			// c = new int[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 9,
+			// 9, 9, 10, 10 };
+			c = new int[] { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 };
 			break;
 		case 5: // 虫
-			c = new int[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 9, 9, 9, 10, 10 };
+			// c = new int[] { 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 9,
+			// 9, 9, 10, 10 };
+			c = new int[] { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 };
 			break;
 		case 6: // 7
-			c = new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 9, 9, 9, 10, 10 };
+			// c = new int[] { 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 9,
+			// 9, 9, 10, 10 };
+			c = new int[] { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 };
 			break;
 		}
 		for (int id : c) {

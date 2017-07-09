@@ -1,11 +1,11 @@
-package inemuri.CardGameObjects;
+package com.inemuri.CardGameObjects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-import inemuri.CardGameObjects.Enum.Party;
+import com.inemuri.CardGameObjects.Enum.Party;
 
 public abstract class GameBaseObject {
 	// 固有信息

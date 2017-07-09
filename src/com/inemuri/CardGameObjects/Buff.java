@@ -1,12 +1,12 @@
-package inemuri.CardGameObjects;
+package com.inemuri.CardGameObjects;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import inemuri.CardGameObjects.Enum.Party;
-import inemuri.CardGameObjects.Enum.Zone;
+import com.inemuri.CardGameObjects.Enum.Party;
+import com.inemuri.CardGameObjects.Enum.Zone;
 
 public class Buff {
 	// 固有信息
@@ -20,6 +20,10 @@ public class Buff {
 	private boolean isActive; // 是否激活
 	private Party party; // 阵营
 	private HashMap<String, Integer> gameData; // 对局数据容器
+
+	// 某些效果需要的临时容器
+	private ArrayList<Integer> mainValue;
+	private ArrayList<Boolean> mainSwitch;
 
 	// 传入的对局数据
 	private int turns; // 当前回合
@@ -48,21 +52,32 @@ public class Buff {
 		enemyDeck = new ArrayList<Card>();
 		allGirls = new ArrayList<Girl>();
 		allCards = new ArrayList<Card>();
+
+		mainValue = new ArrayList<Integer>();
+		mainSwitch = new ArrayList<Boolean>();
 	}
 
 	// 主处理
 	public void run() {
 		switch (id) {
-		case 1: // B塞钱征收("如成功对敌方队伍造成HP伤害,下回合抽牌阶段额外抽三张卡")
+		case 1: // B乐园绝妙的赛钱箱("回合结束时敌方队伍HP总值因为任何原因比现在少的话,下回合抽牌阶段我方额外抽三张卡")
 			// 事件卡只在出牌堆叠生效
-			if (getMasterCard().anyMatch(c -> c.isIn(Zone.PLAYSTACK))) {
-				// 我方伤害需要大于(敌方堆叠产生的护盾值+敌方角色已有护盾)的和
-				if (attackP > shieldE + enemyTeam.stream().filter(g -> g.getPosition() == enemyActivingGirl).findFirst()
-						.get().getShield()) {
-					playerExtraDraws += 3;
-					System.out.println("●●●塞钱征收生效●●●下回合抽牌阶段额外抽三张卡");
-				}
+			if (getMasterCard().anyMatch(c -> c.isIn(Zone.PLAYSTACK)) && !mainSwitch.contains(true)) {
+				// 取得对方队伍的HP总量，打开开关
+				mainValue.add(enemyTeam.stream().mapToInt(g -> g.getHp()).sum());
+				mainValue.add(turns);
+				mainSwitch.add(true);
 			}
+			// 回合结束后仍未触发的话效果结束
+			if (mainSwitch.contains(true) && turns > mainValue.get(1)) {
+				reset();
+			} else if (mainSwitch.contains(true)
+					&& enemyTeam.stream().mapToInt(g -> g.getHp()).sum() < mainValue.get(0)) {
+				playerExtraDraws += 3;
+				reset();
+				System.out.println("●●●强行塞钱征收!●●●我方下回合额外抽3张卡");
+			}
+
 			break;
 		case 2: // B魔力反馈("被敌方取得先手的情况下,己方本次攻击获得10*X的伤害加值,X等同于敌方本回合使用过的【魔】总值的一半")
 			// 魔法卡只在弃牌区生效&被敌方先手
@@ -197,9 +212,16 @@ public class Buff {
 		return allGirls.stream().filter(c -> c.getBuffs().contains(this));
 	}
 
+	// 恢复初始状态
+	private void reset() {
+		mainValue.clear();
+		mainSwitch.clear();
+	}
+
 }
 
+// BUFF数据库
 class BuffsPool {
-	static String[] name = { "DEFAULT_BUFF_NAME", "塞钱征收", "B魔力吸收", "" };
+	static String[] name = { "DEFAULT_BUFF_NAME", "B乐园绝妙的赛钱箱", "B魔力吸收", "B蛇蛙发饰", "" };
 	static int[] priority = { 0, 1, -1, 0, 0 };
 }
